@@ -1,3 +1,4 @@
+// 提取页面所有文本内容中的单词
 function extractWords() {
     const bodyText = document.body.innerText;
     const words = bodyText.match(/\b[a-zA-Z]+\b/g);
@@ -14,11 +15,10 @@ function extractWords() {
 
 }
 
-// 监听来自 background.js 的消息
+// 监听来自 Background 的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    // console.log('Received message from background:', message);
     if (message.action === 'extractWords') {
         const words = extractWords();
-        sendResponse({ words: words });
+        sendResponse({ words }); // 返回提取的单词
     }
 });

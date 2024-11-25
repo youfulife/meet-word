@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "遇见单词",
+  "name": "Words in Page",
   "version": "1.0",
-  "description": "A simple extension that helps you to learn new words from the articles you read.",
+  "description": "A simple extension that helps you to learn new words from current page.",
   "icons": {
     "16": "icons/icon.png",
     "32": "icons/icon.png",
@@ -19,7 +19,9 @@
     "storage",
     "sidePanel",
     "scripting",
-    "contextMenus"
+    "contextMenus",
+    "activeTab",
+    "tabs"
   ],
   "content_scripts": [
     {

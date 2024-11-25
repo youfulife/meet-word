@@ -1,27 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遇见单词</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            padding: 2px 0;
-        }
-    </style>
+  <title>Words in Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+    }
+    #wordsContainer {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin: 5px 0;
+    }
+  </style>
 </head>
 <body>
-    <h1>Word List</h1>
-    <hr />
-    <ul id="wordList"></ul>
-    <script src="sidepanel.js"></script>
+  <h1>Words in Page</h1>
+  <div id="wordsContainer">Loading...</div>
+  <script src="sidepanel.js"></script>
 </body>
 </html>
