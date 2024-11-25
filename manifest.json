@@ -9,13 +9,28 @@
     "48": "icons/icon.png",
     "128": "icons/icon.png"
   },
-  "background": {"service_worker": "background.js"},
-  "side_panel": {"default_path": "sidepanel.html"},
-  "permissions": ["storage", "sidePanel", "scripting", "contextMenus", "activeTab", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "scripting",
+    "contextMenus",
+    "activeTab",
+    "tabs"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
   ]
 }

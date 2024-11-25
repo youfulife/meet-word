@@ -8,6 +8,18 @@
       margin: 0;
       padding: 10px;
     }
+    #refreshButton {
+      margin-bottom: 10px;
+      padding: 5px 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #refreshButton:hover {
+      background-color: #45a049;
+    }
     #wordsContainer {
       max-height: 80vh;
       overflow-y: auto;
@@ -22,7 +34,7 @@
   </style>
 </head>
 <body>
-  <h1>Words in Page</h1>
+  <button id="refreshButton">Refresh</button>
   <div id="wordsContainer">Loading...</div>
   <script src="sidepanel.js"></script>
 </body>
