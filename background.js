@@ -39,10 +39,8 @@ async function translateWords(words) {
   const body = JSON.stringify({
     model: "gpt-4o",
     messages: [
-      {
-        role: "user",
-        content: `Translate the following words into Chinese: ${words.join(", ")}`
-      }
+      { role: 'system', content: "将所有以逗号分割的英文单词转换为包括中文翻译，帮助我过滤掉一些重复的，特别简单的单词，每个单词单独一行，每个单词的中英文之间通过:分割。请检查所有信息是否准确，并在回答时保持简洁，不需要任何其他反馈。" },
+      { role: 'user', content:  `${words.join(", ")}` }
     ],
     max_tokens: 1000 // 根据需要调整
   });
@@ -62,21 +60,9 @@ async function translateWords(words) {
 
   const data = await response.json();
 
-  console.log("gpt: ", data);
-
   // 提取翻译结果
   const translationsRaw = data.choices[0].message.content.trim();
-  const translationsArray = translationsRaw.split("\n").map((line) => line.split(":"));
-
-  // 转换成键值对
-  const translations = {};
-  translationsArray.forEach(([word, translation]) => {
-    if (word && translation) {
-      translations[word.trim()] = translation.trim();
-    }
-  });
-
-  return translations;
+  return translationsRaw
 }
 
 // background.js
@@ -110,7 +96,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .then((translations) => sendResponse({ translations }))
       .catch((error) => {
         console.error("Translation Error:", error);
-        sendResponse({ translations: {} });
+        sendResponse({ translations: [] });
       });
 
     return true; // 异步响应

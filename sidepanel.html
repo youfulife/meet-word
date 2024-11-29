@@ -8,7 +8,7 @@
       margin: 0;
       padding: 10px;
     }
-    #refreshButton {
+    #refreshButton, #translateButton {
       margin-bottom: 10px;
       padding: 5px 10px;
       background-color: #4CAF50;
@@ -19,6 +19,16 @@
     }
     #refreshButton:hover {
       background-color: #45a049;
+    }
+    #translateButton {
+      background-color: #2196F3;
+    }
+    #translateButton:hover {
+      background-color: #0b7dda;
+    }
+    #wordCount {
+      font-weight: bold;
+      margin-bottom: 10px;
     }
     #wordsContainer {
       max-height: 80vh;
@@ -34,8 +44,12 @@
   </style>
 </head>
 <body>
-  <button id="refreshButton">Refresh</button>
-  <div id="wordsContainer">Loading...</div>
+  <div id="buttonContainer">
+    <button id="refreshButton">Refresh</button>
+    <button id="translateButton">Translate</button>
+  </div>
+  <div id="wordCount">Total words: 0</div>
+  <div id="wordsContainer">Loading words...</div>
   <script src="sidepanel.js"></script>
 </body>
 </html>
