@@ -54,18 +54,100 @@ function displayTranslate(translate) {
   container.appendChild(pre);
 }
 
+// 显示翻译结果（每个单词一行显示）
+function displayTranslatedWords(translations, filterTag = null) {
+  const container = document.getElementById("wordsContainer");
+  container.innerHTML = ""; // 清空容器
+  let displayedCount = 0; // 计数器
+
+  if (translations.error) {
+    container.textContent = translations.error;
+    return;
+  }
+
+  for (const [word, details] of Object.entries(translations)) {
+    // 如果当前过滤标签不为空且单词不属于该标签，则跳过
+    if (filterTag && !details.tags.includes(filterTag)) continue;
+
+    // 单词容器
+    const wordItem = document.createElement("div");
+    wordItem.className = "word-item";
+
+    // 单词标题
+    const wordTitle = document.createElement("div");
+    wordTitle.className = "word-title";
+    wordTitle.textContent = word;
+
+    // 单词翻译
+    const wordTranslation = document.createElement("div");
+    wordTranslation.className = "word-translation";
+    wordTranslation.textContent = details.translation;
+
+    // 组装单词内容
+    wordItem.appendChild(wordTitle);
+    wordItem.appendChild(wordTranslation);
+
+    // 添加到主容器
+    container.appendChild(wordItem);
+    displayedCount++;
+  }
+
+  // 更新单词总数
+  const wordCountContainer = document.getElementById("wordCount");
+  wordCountContainer.textContent = `Total words: ${displayedCount}`;
+
+}
+
+// 创建标签按钮
+function displayTagButtons(tags, translations) {
+  const tagsContainer = document.getElementById("tagsContainer");
+  tagsContainer.innerHTML = ""; // 清空标签容器
+
+  // 创建“全部”按钮
+  const allButton = document.createElement("button");
+  allButton.className = "tag-button";
+  allButton.textContent = "全部";
+  allButton.addEventListener("click", () => {
+    displayTranslatedWords(translations); // 显示所有单词
+  });
+  tagsContainer.appendChild(allButton);
+
+  // 根据标签动态创建按钮
+  tags.forEach((tag) => {
+    const tagButton = document.createElement("button");
+    tagButton.className = "tag-button";
+    tagButton.textContent = tag; // 中文标签直接显示
+    tagButton.addEventListener("click", () => {
+      displayTranslatedWords(translations, tag); // 过滤单词
+    });
+    tagsContainer.appendChild(tagButton);
+  });
+}
+
 // 加载单词并翻译
-async function loadWordsAndTranslations(isTranslate = false) {
+async function loadWordsAndTranslations() {
   try {
     // 1. 提取单词
     const words = await fetchWords();
-    displayWords(words);
+    // displayWords(words);
 
     // 2. 请求翻译
-    if(isTranslate) {
-      const translateResult = await translateWords(words);
-      displayTranslate(translateResult);
+    const translateResult = await translateWords(words);
+    
+    if (translateResult.error) {
+      updateWordsContainer(translateResult.error);
+      return;
     }
+
+    // 提取唯一标签
+    const tags = new Set();
+    for (const details of Object.values(translateResult)) {
+      details.tags.forEach((tag) => tags.add(tag));
+    }
+
+    // 显示标签按钮和翻译结果
+    displayTagButtons(tags, translateResult);
+    displayTranslatedWords(translateResult);
 
   } catch (error) {
     console.error("Error loading words or translations:", error);
@@ -74,21 +156,23 @@ async function loadWordsAndTranslations(isTranslate = false) {
   }
 }
 
+// 更新单词容器内容
+function updateWordsContainer(content) {
+  const container = document.getElementById("wordsContainer");
+  container.innerHTML = content;
+}
+
 // 绑定刷新按钮事件
 document.addEventListener("DOMContentLoaded", () => {
   const refreshButton = document.getElementById("refreshButton");
   const translateButton = document.getElementById("translateButton");
 
   // 初次加载单词和翻译
-  loadWordsAndTranslations(false);
+  loadWordsAndTranslations();
 
   // 点击刷新按钮时重新加载
   refreshButton.addEventListener("click", () => {
-    loadWordsAndTranslations(false);
+    loadWordsAndTranslations();
   });
 
-  // 点击翻译按钮时加载单词并翻译
-  translateButton.addEventListener("click", () => {
-    loadWordsAndTranslations(true);
-  });
 });

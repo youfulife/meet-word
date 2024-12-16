@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Words in Page</title>
   <style>
     body {
@@ -30,10 +31,63 @@
       font-weight: bold;
       margin-bottom: 10px;
     }
-    #wordsContainer {
-      max-height: 80vh;
-      overflow-y: auto;
+    #tagsContainer {
+      margin-top: 10px;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
     }
+    .tag-button {
+      padding: 5px 10px;
+      background-color: #f1f1f1;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .tag-button:hover {
+      background-color: #ddd;
+    }
+    #wordsContainer {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      font-size: 14px;
+      overflow-x: auto; /* 启用水平滚动条 */
+
+    }
+    .word-item {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      padding: 5px 0;
+      white-space: nowrap; /* 禁止自动换行 */
+
+    }
+    .word-item:last-child {
+      border-bottom: none;
+    }
+    .word-title {
+      font-weight: bold;
+      color: #333;
+      margin-right: 10px;
+      flex: 0 0 100px; /* 固定单词宽度 */
+    }
+    .word-translation {
+      color: #555;
+      flex: 1; /* 翻译内容占据更大宽度 */
+    }
+    .word-tag {
+      color: #888;
+      margin-right: 10px;
+      font-style: italic;
+      flex: 2; /* 标签自适应宽度 */
+    }
+
+
     ul {
       list-style-type: none;
       padding: 0;
@@ -46,8 +100,10 @@
 <body>
   <div id="buttonContainer">
     <button id="refreshButton">Refresh</button>
-    <button id="translateButton">Translate</button>
+    <!-- <button id="translateButton">Translate</button> -->
   </div>
+  <!-- 标签按钮容器 -->
+  <div id="tagsContainer"></div>
   <div id="wordCount">Total words: 0</div>
   <div id="wordsContainer">Loading words...</div>
   <script src="sidepanel.js"></script>
