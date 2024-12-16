@@ -129,14 +129,18 @@ function displayTagButtons(tags, translations) {
   allButton.textContent = "全部";
   allButton.addEventListener("click", () => {
     selectedTags.clear(); // 清空所有选中标签
-    updateDisplayedWords(); // 更新显示
+    
     // 更新按钮样式
     const buttons = tagsContainer.querySelectorAll(".tag-button");
     buttons.forEach((btn) => btn.classList.remove("active"));
+
+    displayTranslatedWords(translations);
   });
   tagsContainer.appendChild(allButton);
 
   // 根据标签动态创建按钮
+  // 普通标签（去掉 "其他" 标签后处理）
+
   tags.forEach((tag) => {
     const tagButton = document.createElement("button");
     tagButton.className = "tag-button";
@@ -151,10 +155,11 @@ function displayTagButtons(tags, translations) {
         selectedTags.add(tag);
         tagButton.classList.add("active");
       }
-      updateDisplayedWords(); // 根据最新的选中标签更新显示
+      displayTranslatedWords(translations, Array.from(selectedTags));
     });
     tagsContainer.appendChild(tagButton);
   });
+
 }
 
 // 加载单词并翻译
