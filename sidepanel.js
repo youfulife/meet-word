@@ -55,7 +55,7 @@ function displayTranslate(translate) {
 }
 
 // 显示翻译结果（每个单词一行显示）
-function displayTranslatedWords(translations, filterTag = null) {
+function displayTranslatedWords(translations, activeTags = null) {
   const container = document.getElementById("wordsContainer");
   container.innerHTML = ""; // 清空容器
   let displayedCount = 0; // 计数器
@@ -66,8 +66,10 @@ function displayTranslatedWords(translations, filterTag = null) {
   }
 
   for (const [word, details] of Object.entries(translations)) {
-    // 如果当前过滤标签不为空且单词不属于该标签，则跳过
-    if (filterTag && !details.tags.includes(filterTag)) continue;
+    // 如果当前有选中标签，过滤不匹配的单词
+    if (activeTags && !details.tags.some((tag) => activeTags.includes(tag))) {
+      continue;
+    }
 
     // 单词容器
     const wordItem = document.createElement("div");
@@ -103,12 +105,34 @@ function displayTagButtons(tags, translations) {
   const tagsContainer = document.getElementById("tagsContainer");
   tagsContainer.innerHTML = ""; // 清空标签容器
 
+  // 保存当前选中的标签
+  const selectedTags = new Set();
+
+  // 更新单词显示逻辑
+  const updateDisplayedWords = () => {
+    if (selectedTags.size === 0) {
+      // 如果没有标签被选中，显示所有单词
+      displayTranslatedWords(translations);
+    } else {
+      // 显示包含任意选中标签的单词
+      const activeTags = Array.from(selectedTags);
+      displayTranslatedWords(translations, activeTags);
+    }
+  };
+
+  // 选中的按钮引用
+  let activeButton = null;
+
   // 创建“全部”按钮
   const allButton = document.createElement("button");
   allButton.className = "tag-button";
   allButton.textContent = "全部";
   allButton.addEventListener("click", () => {
-    displayTranslatedWords(translations); // 显示所有单词
+    selectedTags.clear(); // 清空所有选中标签
+    updateDisplayedWords(); // 更新显示
+    // 更新按钮样式
+    const buttons = tagsContainer.querySelectorAll(".tag-button");
+    buttons.forEach((btn) => btn.classList.remove("active"));
   });
   tagsContainer.appendChild(allButton);
 
@@ -118,7 +142,16 @@ function displayTagButtons(tags, translations) {
     tagButton.className = "tag-button";
     tagButton.textContent = tag; // 中文标签直接显示
     tagButton.addEventListener("click", () => {
-      displayTranslatedWords(translations, tag); // 过滤单词
+      if (selectedTags.has(tag)) {
+        // 如果标签已选中，则取消选中
+        selectedTags.delete(tag);
+        tagButton.classList.remove("active");
+      } else {
+        // 如果标签未选中，则添加到选中列表
+        selectedTags.add(tag);
+        tagButton.classList.add("active");
+      }
+      updateDisplayedWords(); // 根据最新的选中标签更新显示
     });
     tagsContainer.appendChild(tagButton);
   });

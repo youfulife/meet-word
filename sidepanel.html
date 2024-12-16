@@ -9,24 +9,28 @@
       margin: 0;
       padding: 10px;
     }
-    #refreshButton, #translateButton {
-      margin-bottom: 10px;
+    /* 刷新按钮容器样式 */
+    #refreshButtonContainer {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    /* 刷新按钮样式 */
+    #refreshButton {
       padding: 5px 10px;
-      background-color: #4CAF50;
+      background-color: #007bff;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
+
     #refreshButton:hover {
-      background-color: #45a049;
+      background-color: #0056b3;
     }
-    #translateButton {
-      background-color: #2196F3;
-    }
-    #translateButton:hover {
-      background-color: #0b7dda;
-    }
+
     #wordCount {
       font-weight: bold;
       margin-bottom: 10px;
@@ -40,15 +44,24 @@
     }
     .tag-button {
       padding: 5px 10px;
-      background-color: #f1f1f1;
-      border: 1px solid #ddd;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
       border-radius: 5px;
       cursor: pointer;
-      font-size: 14px;
+      transition: background-color 0.2s;
     }
+
     .tag-button:hover {
-      background-color: #ddd;
+      background-color: #4CAF50;
     }
+
+    /* 选中标签按钮样式 */
+    .tag-button.active {
+      background-color: #007bff; /* 蓝色背景 */
+      color: white; /* 白色文字 */
+      border-color: #0056b3; /* 深蓝边框 */
+    }
+
     #wordsContainer {
       margin-top: 10px;
       padding: 10px;
@@ -98,9 +111,8 @@
   </style>
 </head>
 <body>
-  <div id="buttonContainer">
-    <button id="refreshButton">Refresh</button>
-    <!-- <button id="translateButton">Translate</button> -->
+  <div id="refreshButtonContainer">
+    <button id="refreshButton">刷新</button>
   </div>
   <!-- 标签按钮容器 -->
   <div id="tagsContainer"></div>
