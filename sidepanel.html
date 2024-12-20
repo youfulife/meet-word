@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>Words in Page</title>
@@ -13,31 +14,64 @@
     /* 按钮功能区容器 */
     #buttonContainer {
       display: flex;
-      justify-content: flex-end; /* 刷新按钮靠右对齐 */
-      align-items: center;       /* 垂直居中对齐 */
+      justify-content: flex-end;
+      /* 刷新按钮靠右对齐 */
+      align-items: center;
+      /* 垂直居中对齐 */
       padding: 5px;
-      background-color: #f9f9f9; /* 背景颜色 */
+      background-color: #f9f9f9;
+      /* 背景颜色 */
+    }
+
+    /* 通用按钮样式 */
+    #buttonContainer button {
+      padding: 8px 12px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     /* 刷新按钮样式 */
     #refreshButton {
-      padding: 5px 10px;
-      background-color: #007bff;
+      background-color: #4CAF50;
+      /* 绿色 */
       color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
     }
 
     #refreshButton:hover {
-      background-color: #0056b3;
+      background-color: #45a049;
+      /* 深绿色 */
     }
+
+    /* 显示收藏按钮样式 */
+    #filterStarredButton {
+      background-color: #007BFF;
+      /* 蓝色 */
+      color: white;
+    }
+
+    #filterStarredButton:hover {
+      background-color: #0056b3;
+      /* 深蓝色 */
+    }
+
+    /* 激活状态的按钮 */
+    #filterStarredButton.active {
+      background-color: #FFD700;
+      /* 金色 */
+      color: black;
+    }
+
+
 
     #wordCount {
       font-weight: bold;
       margin-bottom: 10px;
     }
+
     #tagsContainer {
       margin-top: 10px;
       padding: 5px;
@@ -45,6 +79,7 @@
       flex-wrap: wrap;
       gap: 5px;
     }
+
     .tag-button {
       padding: 5px 10px;
       background-color: #f0f0f0;
@@ -60,9 +95,12 @@
 
     /* 选中标签按钮样式 */
     .tag-button.active {
-      background-color: #007bff; /* 蓝色背景 */
-      color: white; /* 白色文字 */
-      border-color: #0056b3; /* 深蓝边框 */
+      background-color: #007bff;
+      /* 蓝色背景 */
+      color: white;
+      /* 白色文字 */
+      border-color: #0056b3;
+      /* 深蓝边框 */
     }
 
     #wordsContainer {
@@ -72,55 +110,80 @@
       border-radius: 5px;
       background-color: #f9f9f9;
       font-size: 14px;
-      overflow-x: auto; /* 启用水平滚动条 */
+      overflow-x: auto;
+      /* 启用水平滚动条 */
 
     }
+
     .word-item {
       display: flex;
       align-items: center;
       border-bottom: 1px solid #eee;
       padding: 5px 0;
-      white-space: nowrap; /* 禁止自动换行 */
+      white-space: nowrap;
+      /* 禁止自动换行 */
 
     }
+
     .word-item:last-child {
       border-bottom: none;
     }
+
     .word-title {
       font-weight: bold;
       color: #333;
       margin-right: 10px;
-      flex: 0 0 100px; /* 固定单词宽度 */
+      flex: 0 0 100px;
+      /* 固定单词宽度 */
     }
+
     .word-translation {
       color: #555;
-      flex: 1; /* 翻译内容占据更大宽度 */
+      flex: 1;
+      /* 翻译内容占据更大宽度 */
     }
+
     .word-tag {
       color: #888;
       margin-right: 10px;
       font-style: italic;
-      flex: 2; /* 标签自适应宽度 */
+      flex: 2;
+      /* 标签自适应宽度 */
     }
 
+    .bookmark-button {
+      background: none;
+      border: none;
+      font-size: 1.2em;
+      cursor: pointer;
+      color: gray;
+    }
+
+    .bookmark-button.bookmarked {
+      color: gold;
+    }
 
     ul {
       list-style-type: none;
       padding: 0;
     }
+
     li {
       margin: 5px 0;
     }
   </style>
 </head>
+
 <body>
   <div id="buttonContainer">
+    <button id="filterStarredButton">显示全部</button>
     <button id="refreshButton">刷新</button>
   </div>
   <!-- 标签按钮容器 -->
   <div id="tagsContainer"></div>
-  <div id="wordCount">Total words: 0</div>
+  <div id="wordCount">总数: 0</div>
   <div id="wordsContainer">Loading words...</div>
   <script src="sidepanel.js"></script>
 </body>
+
 </html>
