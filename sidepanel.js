@@ -1,4 +1,6 @@
 // Description: 侧边栏的逻辑处理
+let isFilterStarredActive = false; // 用于记录是否处于过滤收藏状态
+let selectedTags = new Set(); // 用于记录选中的标签
 
 // 向 Background 请求提取当前页面的单词
 function fetchWords() {
@@ -10,7 +12,7 @@ function fetchWords() {
   });
 }
 
-// 向 Background 请求 GPT 翻译所有单词
+// 向 Background 请求翻译所有单词
 function translateWords(words) {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ action: "translateWords", words }, (response) => {
@@ -18,6 +20,8 @@ function translateWords(words) {
     });
   });
 }
+
+
 
 // 显示翻译结果（每个单词一行显示）
 function displayTranslatedWords(translations, activeTags = null) {
@@ -51,9 +55,13 @@ function displayTranslatedWords(translations, activeTags = null) {
       bookmarkButton.title = "收藏";
       // 设置收藏状态
       if (bookmarkSet.has(word)) {
+        bookmarkButton.textContent = "★"; // 实心星
         bookmarkButton.classList.add("bookmarked");
+      } else {
+        bookmarkButton.textContent = "☆"; // 空心星
+        bookmarkButton.classList.remove("bookmarked");
       }
-      bookmarkButton.textContent = "☆";
+
       // 绑定点击事件
       bookmarkButton.addEventListener("click", (event) => toggleBookmark(event));
 
@@ -81,7 +89,7 @@ function displayTranslatedWords(translations, activeTags = null) {
 
 }
 
-function saveBookmarks(bookmarks) {
+function saveBookmarksToStorage(bookmarks) {
   chrome.storage.sync.set({ bookmarks });
 }
 
@@ -101,20 +109,21 @@ function toggleBookmark(event) {
 
     if (bookmarkSet.has(word)) {
       bookmarkSet.delete(word); // 取消收藏
+      button.textContent = "☆"; // 空心星
       button.classList.remove("bookmarked");
     } else {
       bookmarkSet.add(word); // 添加收藏
+      button.textContent = "★"; // 实心星
       button.classList.add("bookmarked");
     }
 
-    saveBookmarks([...bookmarkSet]); // 保存更新后的收藏列表
+    saveBookmarksToStorage([...bookmarkSet]); // 保存更新后的收藏列表
+    saveBookmarksToServer([...bookmarkSet]);
+
   });
 }
 
-
 // 创建标签按钮
-// 保存当前选中的标签
-let selectedTags = new Set();
 function displayTagButtons(tags, translations) {
   const tagsContainer = document.getElementById("tagsContainer");
   tagsContainer.innerHTML = ""; // 清空标签容器
@@ -191,8 +200,6 @@ function updateWordsContainer(content) {
   container.innerHTML = content;
 }
 
-let isFilterStarredActive = false; // 用于记录是否处于过滤收藏状态
-
 function toggleStarredFilter() {
   isFilterStarredActive = !isFilterStarredActive;
 
@@ -200,11 +207,9 @@ function toggleStarredFilter() {
   if (isFilterStarredActive) {
     filterButton.classList.add("active");
     filterButton.textContent = "显示收藏";
-    // displayStarredWords(); // 显示收藏的单词
   } else {
     filterButton.classList.remove("active");
     filterButton.textContent = "显示全部";
-    // refreshWordsList(); // 恢复显示全部单词
   }
 
   applyFilters(); // 重新应用过滤条件
@@ -265,26 +270,60 @@ function updateWordCount(words) {
   wordCountDisplay.textContent = `总数: ${count}`;
 }
 
-function displayStarredWords() {
-  getBookmarks((bookmarks) => {
-    const filteredWords = {};
-    const allWords = window.translatedWords || {}; // 从全局变量中获取翻译的单词
-
-    for (const word of bookmarks) {
-      if (allWords[word]) {
-        filteredWords[word] = allWords[word];
-      }
-    }
-
-    displayTranslatedWords(filteredWords); // 调用已有函数，重新渲染单词列表
+// 保存收藏到服务器
+function saveBookmarksToServer(bookmarks) {
+  chrome.runtime.sendMessage({
+    action: "saveBookmarks", bookmarks
+  }, (response) => {
+    console.log("Bookmarks saved to server:", response);
   });
 }
 
-function refreshWordsList() {
-  if (window.translatedWords) {
-    displayTranslatedWords(window.translatedWords); // 全部重新渲染
+// 封装 chrome.runtime.sendMessage 为 Promise
+function sendMessageToBackground(message) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(response);
+      }
+    });
+  });
+}
+
+// 封装 chrome.storage.sync.set 为 Promise
+function saveBookmarksToStorageSync(bookmarks) {
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.set({ bookmarks: Array.from(bookmarks) }, () => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+async function loadBookmarksFromServer() {
+  try {
+    const response = await sendMessageToBackground({ action: "loadBookmarks" });
+    if (response && response.status === "success") {
+      bookmarkSet = new Set(response.bookmarks || []);
+      await saveBookmarksToStorageSync(bookmarkSet); // 同步到本地存储
+      console.log("Bookmarks loaded from server:", response.bookmarks);
+
+      // 更新 UI
+      applyFilters();
+    } else {
+      console.error("Failed to load bookmarks:", response ? response.message : "No response");
+    }
+  } catch (error) {
+    console.error("Error loading bookmarks from server:", error);
   }
 }
+
+
 
 // 绑定刷新按钮事件
 document.addEventListener("DOMContentLoaded", () => {
@@ -292,6 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("filterStarredButton").addEventListener("click", toggleStarredFilter);
 
+  loadBookmarksFromServer();
 
   // 初次加载单词和翻译
   loadWordsAndTranslations();

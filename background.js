@@ -1,3 +1,47 @@
+const API_BASE_URL = "http://127.0.0.1:5000"; // 后端服务的基础 URL
+const userId = "user123"; // 假设从存储或登录信息中获取
+
+// saveBookmarksToServer 函数用于将收藏保存到服务器
+function saveBookmarksToServer(bookmarks) {
+  fetch(`${API_BASE_URL}/saveBookmarks`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId,
+      bookmarks: Array.from(bookmarks),
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.status === "success") {
+        console.log("Bookmarks saved successfully.");
+      } else {
+        console.error("Failed to save bookmarks:", data.message);
+      }
+    })
+    .catch((error) => console.error("Error saving bookmarks:", error));
+}
+
+async function loadBookmarksFromServer(callback) {
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/getBookmarks?userId=${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+    console.log("Background Bookmarks loaded from server:", data);
+    return data;
+  } catch (error) {
+    console.error("Error loading bookmarks:", error);
+    return { status: "error", message: "Failed to load bookmarks" };
+  }
+}
 
 // 向后端发送单词列表进行翻译
 async function translateWords(words) {
@@ -59,6 +103,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ translations: [] });
       });
 
+    return true; // 异步响应
+  } else if (message.action === "saveBookmarks") {
+    // 保存收藏到服务器
+    saveBookmarksToServer(message.bookmarks);
+    return true; // 异步响应
+  } else if (message.action === "loadBookmarks") {
+    loadBookmarksFromServer()
+      .then((response) => sendResponse(response))
+      .catch((error) => {
+        console.error("Error loading bookmarks:", error);
+        sendResponse({ status: "error", message: "Failed to load bookmarks" });
+      });
     return true; // 异步响应
   }
 });
