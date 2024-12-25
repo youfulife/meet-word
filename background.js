@@ -116,6 +116,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ status: "error", message: "Failed to load bookmarks" });
       });
     return true; // 异步响应
-  }
+  } else if (message.action === "extractWordsAndSentences") {
+    chrome.tabs.sendMessage(sender.tab.id, { action: "extractWordsAndSentences" }, sendResponse);
+    return true; // 保持消息通道打开
+}
 });
 

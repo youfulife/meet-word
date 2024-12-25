@@ -1,6 +1,7 @@
 // Description: 侧边栏的逻辑处理
 let isFilterStarredActive = false; // 用于记录是否处于过滤收藏状态
 let selectedTags = new Set(); // 用于记录选中的标签
+let wordSentenceMap = {}; // 用于存储单词对应的句子
 
 // 向 Background 请求提取当前页面的单词
 function fetchWords() {
@@ -24,25 +25,15 @@ function translateWords(words) {
 
 
 // 显示翻译结果（每个单词一行显示）
-function displayTranslatedWords(translations, activeTags = null) {
+function displayTranslatedWords(translations) {
   const container = document.getElementById("wordsContainer");
   container.innerHTML = ""; // 清空容器
   let displayedCount = 0; // 计数器
-
-  if (translations.error) {
-    container.textContent = translations.error;
-    return;
-  }
 
   getBookmarks((bookmarks) => {
     const bookmarkSet = new Set(bookmarks);
 
     for (const [word, details] of Object.entries(translations)) {
-      // 如果当前有选中标签，过滤不匹配的单词
-      if (activeTags && !details.tags.some((tag) => activeTags.includes(tag))) {
-        continue;
-      }
-
       // 单词容器
       const wordItem = document.createElement("div");
       wordItem.className = "word-item";
@@ -71,6 +62,40 @@ function displayTranslatedWords(translations, activeTags = null) {
       wordTitle.className = "word-title";
       wordTitle.textContent = word;
 
+      // 添加展开/收起图标
+      const toggleButton = document.createElement("button");
+      toggleButton.classList.add("toggle-button");
+      toggleButton.textContent = "▼"; // 初始状态为收起
+      toggleButton.dataset.word = word;
+
+      // 句子容器
+      const sentenceContainer = document.createElement("div");
+      sentenceContainer.classList.add("sentence-container");
+      sentenceContainer.style.display = "none"; // 初始隐藏
+      // 添加对应的句子
+      const sentences = wordSentenceMap[word] || [];
+      sentences.forEach((sentence, index) => {
+        const sentenceElement = document.createElement("p");
+        // 高亮目标单词
+        const highlightedSentence = sentence.replace(
+          new RegExp(`\\b(${word})\\b`, "gi"), // 匹配整个单词，忽略大小写
+          `<span class="highlight">$1</span>`  // 用高亮样式包裹
+        );
+        sentenceElement.innerHTML = `${index + 1}. ${highlightedSentence}`;
+        sentenceElement.classList.add("sentence-item");
+        sentenceContainer.appendChild(sentenceElement);
+      });
+  
+
+      // 点击切换显示
+      toggleButton.addEventListener("click", () => {
+        const isHidden = sentenceContainer.style.display === "none";
+        sentenceContainer.style.display = isHidden ? "block" : "none";
+        toggleButton.textContent = isHidden ? "▲" : "▼"; // 更新图标
+      });
+
+      wordTitle.appendChild(toggleButton); // 添加图标到单词标题
+
       // 单词翻译
       const wordTranslation = document.createElement("div");
       wordTranslation.className = "word-translation";
@@ -81,8 +106,11 @@ function displayTranslatedWords(translations, activeTags = null) {
       wordItem.appendChild(wordTitle);
       wordItem.appendChild(wordTranslation);
 
+      console.log("Word Item:", wordItem);
+
       // 添加到主容器
       container.appendChild(wordItem);
+      container.appendChild(sentenceContainer); // 添加句子容器到单词容器
       displayedCount++;
     }
   });
@@ -167,10 +195,15 @@ async function loadWordsAndTranslations() {
     // 1. 提取单词
     const words = await fetchWords();
 
+    // 提取句子
+    wordSentenceMap = await fetchWordsAndSentences();
+
     // 2. 请求翻译
     const translateResult = await translateWords(words);
 
-    if (translateResult.error) {
+    // console.log("Translation Result:", translateResult);
+
+    if (translateResult.error && Object.keys(translateResult).length === 1) {
       updateWordsContainer(translateResult.error);
       return;
     }
@@ -323,7 +356,23 @@ async function loadBookmarksFromServer() {
   }
 }
 
-
+async function fetchWordsAndSentences() {
+  return new Promise((resolve, reject) => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          chrome.tabs.sendMessage(
+              tabs[0].id,
+              { action: "extractWordsAndSentences" },
+              (response) => {
+                  if (chrome.runtime.lastError || !response) {
+                      reject(chrome.runtime.lastError || "No response from content script");
+                  } else {
+                      resolve(response.wordSentenceMap);
+                  }
+              }
+          );
+      });
+  });
+}
 
 // 绑定刷新按钮事件
 document.addEventListener("DOMContentLoaded", () => {
