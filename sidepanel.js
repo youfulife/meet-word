@@ -85,7 +85,7 @@ function displayTranslatedWords(translations) {
         sentenceElement.classList.add("sentence-item");
         sentenceContainer.appendChild(sentenceElement);
       });
-  
+
 
       // 点击切换显示
       toggleButton.addEventListener("click", () => {
@@ -105,8 +105,6 @@ function displayTranslatedWords(translations) {
       wordItem.appendChild(bookmarkButton);
       wordItem.appendChild(wordTitle);
       wordItem.appendChild(wordTranslation);
-
-      console.log("Word Item:", wordItem);
 
       // 添加到主容器
       container.appendChild(wordItem);
@@ -338,6 +336,18 @@ function saveBookmarksToStorageSync(bookmarks) {
   });
 }
 
+function getBookmarksFromStorageSync() {
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.get(["bookmarks"], (result) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(new Set(result.bookmarks || [])); // 返回一个 Set 数据结构
+      }
+    });
+  });
+}
+
 async function loadBookmarksFromServer() {
   try {
     const response = await sendMessageToBackground({ action: "loadBookmarks" });
@@ -358,21 +368,125 @@ async function loadBookmarksFromServer() {
 
 async function fetchWordsAndSentences() {
   return new Promise((resolve, reject) => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          chrome.tabs.sendMessage(
-              tabs[0].id,
-              { action: "extractWordsAndSentences" },
-              (response) => {
-                  if (chrome.runtime.lastError || !response) {
-                      reject(chrome.runtime.lastError || "No response from content script");
-                  } else {
-                      resolve(response.wordSentenceMap);
-                  }
-              }
-          );
-      });
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(
+        tabs[0].id,
+        { action: "extractWordsAndSentences" },
+        (response) => {
+          if (chrome.runtime.lastError || !response) {
+            reject(chrome.runtime.lastError || "No response from content script");
+          } else {
+            resolve(response.wordSentenceMap);
+          }
+        }
+      );
+    });
   });
 }
+
+async function loadFontAsBase64(url) {
+  const response = await fetch(url);
+  const fontBuffer = await response.arrayBuffer();
+
+  // 使用 FileReader 来避免堆栈溢出
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([fontBuffer]);
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(",")[1]); // 只提取 Base64 部分
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function exportToPDF() {
+  const fontURL = chrome.runtime.getURL("fonts/SourceHanSans-Normal.ttf");
+  const base64Font = await loadFontAsBase64(fontURL);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // 检查 autoTable 是否加载
+  if (!doc.autoTable) {
+    console.error("jsPDF autoTable plugin not loaded!");
+    return;
+  }
+
+  // 添加字体到 jsPDF
+  doc.addFileToVFS("SourceHanSans-Normal.ttf", base64Font);
+  doc.addFont("SourceHanSans-Normal.ttf", "SourceHanSans", "normal");
+  doc.setFont("SourceHanSans");
+
+  // 获取当前活动标签页的标题和 URL
+  const [activeTab] = await new Promise((resolve) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => resolve(tabs));
+  });
+  const pageTitle = activeTab.title || "未知";
+  const pageURL = activeTab.url || "未知";
+
+  // 添加标题
+  const today = new Date().toLocaleDateString();
+  doc.setFontSize(18);
+  doc.text("Words in Page", 10, 20);
+  doc.setFontSize(12);
+  doc.text(`日期: ${today}`, 10, 30);
+  doc.text(`页面标题: ${pageTitle}`, 10, 40);
+  doc.text(`页面地址: ${pageURL}`, 10, 50);
+
+
+  // 准备表格数据
+  const bookmarks = await getBookmarksFromStorageSync(); // 获取收藏的单词
+  // 添加单词数量信息
+  doc.text(`单词数量: ${bookmarks.size}`, 10, 60);
+  const tableData = [];
+  bookmarks.forEach((word) => {
+    const sentences = wordSentenceMap[word] || [];
+    const translation = window.translatedWords[word]?.translation; // 获取翻译
+
+    // 忽略没有翻译的单词
+    if (!translation) {
+      return;
+    }
+
+    // 整理表格行数据，例句用黑点列表
+    const formattedSentences = sentences.map(
+      (sentence) => `${sentence}`
+    ).join("\n\n");
+
+    // 整理表格行数据
+    tableData.push({
+      单词: word,
+      翻译: translation,
+      例句: formattedSentences, // 多个句子用换行分隔
+    });
+  });
+
+  // 使用 jspdf-autotable 绘制表格
+  doc.autoTable({
+    head: [["单词", "翻译", "例句"]],
+    body: tableData.map((row) => [row.单词, row.翻译, row.例句]),
+    styles: { font: "SourceHanSans", fontSize: 13 }, // 字体稍微大一点
+    startY: 70, // 表格起始位置
+    margin: { left: 10, right: 10 },
+    columnStyles: {
+      0: { cellWidth: 40 }, // 单词列宽度
+      1: { cellWidth: 60 }, // 翻译列宽度
+      2: { cellWidth: 80 }, // 例句列宽度
+    },
+    bodyStyles: { valign: "top" },
+    headStyles: { fillColor: [52, 73, 94], textColor: 255 }, // 表头样式 
+    theme: "grid",
+  });
+
+
+
+  // 在 doc.save 调用前生成带日期的文件名
+  const todayDate = new Date().toISOString().split("T")[0]; // 格式化日期为 YYYY-MM-DD
+  const fileName = `生词本_${todayDate}.pdf`;
+
+  // 保存 PDF
+  doc.save(fileName);
+}
+
 
 // 绑定刷新按钮事件
 document.addEventListener("DOMContentLoaded", () => {
@@ -389,5 +503,8 @@ document.addEventListener("DOMContentLoaded", () => {
   refreshButton.addEventListener("click", () => {
     loadWordsAndTranslations();
   });
+
+  // 绑定导出按钮点击事件
+  document.getElementById("exportButton").addEventListener("click", exportToPDF);
 
 });
