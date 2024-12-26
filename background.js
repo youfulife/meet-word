@@ -35,7 +35,7 @@ async function loadBookmarksFromServer(callback) {
     });
 
     const data = await response.json();
-    console.log("Background Bookmarks loaded from server:", data);
+    // console.log("Background Bookmarks loaded from server:", data);
     return data;
   } catch (error) {
     console.error("Error loading bookmarks:", error);

@@ -237,10 +237,10 @@ function toggleStarredFilter() {
   const filterButton = document.getElementById("filterStarredButton");
   if (isFilterStarredActive) {
     filterButton.classList.add("active");
-    filterButton.textContent = "显示收藏";
+    filterButton.textContent = "关闭生词本";
   } else {
     filterButton.classList.remove("active");
-    filterButton.textContent = "显示全部";
+    filterButton.textContent = "查看生词本";
   }
 
   applyFilters(); // 重新应用过滤条件
@@ -354,7 +354,7 @@ async function loadBookmarksFromServer() {
     if (response && response.status === "success") {
       bookmarkSet = new Set(response.bookmarks || []);
       await saveBookmarksToStorageSync(bookmarkSet); // 同步到本地存储
-      console.log("Bookmarks loaded from server:", response.bookmarks);
+      // console.log("Bookmarks loaded from server:", response.bookmarks);
 
       // 更新 UI
       applyFilters();
@@ -426,17 +426,24 @@ async function exportToPDF() {
   // 添加标题
   const today = new Date().toLocaleDateString();
   doc.setFontSize(18);
-  doc.text("Words in Page", 10, 20);
+  doc.text("Words in Page（遇见单词，记住单词）", 10, 20);
   doc.setFontSize(12);
-  doc.text(`日期: ${today}`, 10, 30);
-  doc.text(`页面标题: ${pageTitle}`, 10, 40);
-  doc.text(`页面地址: ${pageURL}`, 10, 50);
+  // doc.text(`日期: ${today}`, 10, 30);
+  // doc.text(`页面标题: ${pageTitle}`, 10, 40);
+  // doc.text(`页面地址: ${pageURL}`, 10, 50);
 
+    // 自动换行计算
+    const titleLines = doc.splitTextToSize(`页面标题: ${pageTitle}`, 190); // 宽度为页面减去左右边距
+    const urlLines = doc.splitTextToSize(`页面地址: ${pageURL}`, 190);
+      // 动态绘制标题和 URL
+  doc.text(`日期: ${today}`, 10, 30);
+  doc.text(titleLines, 10, 40);
+  doc.text(urlLines, 10, 40 + titleLines.length * 10);
 
   // 准备表格数据
   const bookmarks = await getBookmarksFromStorageSync(); // 获取收藏的单词
   // 添加单词数量信息
-  doc.text(`单词数量: ${bookmarks.size}`, 10, 60);
+  doc.text(`单词数量: ${bookmarks.size}`, 10, 40 + titleLines.length * 10 + urlLines.length * 10);
   const tableData = [];
   bookmarks.forEach((word) => {
     const sentences = wordSentenceMap[word] || [];
@@ -462,15 +469,16 @@ async function exportToPDF() {
 
   // 使用 jspdf-autotable 绘制表格
   doc.autoTable({
-    head: [["单词", "翻译", "例句"]],
+    head: [["单词", "翻译", "文中例句"]],
     body: tableData.map((row) => [row.单词, row.翻译, row.例句]),
-    styles: { font: "SourceHanSans", fontSize: 13 }, // 字体稍微大一点
-    startY: 70, // 表格起始位置
+    styles: { font: "SourceHanSans", fontSize: 12 }, 
+    startY: 50 + titleLines.length * 10 + urlLines.length * 10,
+
     margin: { left: 10, right: 10 },
     columnStyles: {
-      0: { cellWidth: 40 }, // 单词列宽度
-      1: { cellWidth: 60 }, // 翻译列宽度
-      2: { cellWidth: 80 }, // 例句列宽度
+      0: { cellWidth: 'auto' }, // 自动调整单词列宽
+      1: { cellWidth: 'auto' }, // 自动调整翻译列宽
+      2: { cellWidth: 'auto' }, // 自动调整例句列宽
     },
     bodyStyles: { valign: "top" },
     headStyles: { fillColor: [52, 73, 94], textColor: 255 }, // 表头样式 
