@@ -144,7 +144,7 @@ function toggleBookmark(event) {
     }
 
     saveBookmarksToStorage([...bookmarkSet]); // 保存更新后的收藏列表
-    saveBookmarksToServer([...bookmarkSet]);
+    // saveBookmarksToServer([...bookmarkSet]);
 
   });
 }
@@ -399,7 +399,7 @@ async function loadFontAsBase64(url) {
 }
 
 async function exportToPDF() {
-  const fontURL = chrome.runtime.getURL("fonts/SourceHanSans-Normal.ttf");
+  const fontURL = chrome.runtime.getURL("fonts/arial-unicode-ms.ttf");
   const base64Font = await loadFontAsBase64(fontURL);
 
   const { jsPDF } = window.jspdf;
@@ -412,9 +412,10 @@ async function exportToPDF() {
   }
 
   // 添加字体到 jsPDF
-  doc.addFileToVFS("SourceHanSans-Normal.ttf", base64Font);
-  doc.addFont("SourceHanSans-Normal.ttf", "SourceHanSans", "normal");
-  doc.setFont("SourceHanSans");
+  doc.addFileToVFS("arial-unicode-ms.ttf", base64Font);
+  doc.addFont("arial-unicode-ms.ttf", "arial-unicode-ms", "normal");
+  doc.setFont("arial-unicode-ms");
+  
 
   // 获取当前活动标签页的标题和 URL
   const [activeTab] = await new Promise((resolve) => {
@@ -432,10 +433,10 @@ async function exportToPDF() {
   // doc.text(`页面标题: ${pageTitle}`, 10, 40);
   // doc.text(`页面地址: ${pageURL}`, 10, 50);
 
-    // 自动换行计算
-    const titleLines = doc.splitTextToSize(`页面标题: ${pageTitle}`, 190); // 宽度为页面减去左右边距
-    const urlLines = doc.splitTextToSize(`页面地址: ${pageURL}`, 190);
-      // 动态绘制标题和 URL
+  // 自动换行计算
+  const titleLines = doc.splitTextToSize(`页面标题: ${pageTitle}`, 190); // 宽度为页面减去左右边距
+  const urlLines = doc.splitTextToSize(`页面地址: ${pageURL}`, 190);
+  // 动态绘制标题和 URL
   doc.text(`日期: ${today}`, 10, 30);
   doc.text(titleLines, 10, 40);
   doc.text(urlLines, 10, 40 + titleLines.length * 10);
@@ -443,27 +444,33 @@ async function exportToPDF() {
   // 准备表格数据
   const bookmarks = await getBookmarksFromStorageSync(); // 获取收藏的单词
   // 添加单词数量信息
-  doc.text(`单词数量: ${bookmarks.size}`, 10, 40 + titleLines.length * 10 + urlLines.length * 10);
+  // doc.text(`单词数量: ${bookmarks.size}`, 10, 40 + titleLines.length * 10 + urlLines.length * 10);
   const tableData = [];
   bookmarks.forEach((word) => {
     const sentences = wordSentenceMap[word] || [];
     const translation = window.translatedWords[word]?.translation; // 获取翻译
+    const phonetic = window.translatedWords[word]?.phonetic || ""; // 获取音标
 
     // 忽略没有翻译的单词
     if (!translation) {
       return;
     }
 
-    // 整理表格行数据，例句用黑点列表
-    const formattedSentences = sentences.map(
-      (sentence) => `${sentence}`
-    ).join("\n\n");
+    // 从多个句子中选择最长的那个
+    const longestSentence = sentences.reduce(
+      (longest, current) => (current.length > longest.length ? current : longest),
+      ""
+    );
+
+    // 将音标放在单词下方
+    const wordWithPhonetic = phonetic ? `${word}\n${phonetic}` : word;
+
 
     // 整理表格行数据
     tableData.push({
-      单词: word,
+      单词: wordWithPhonetic,
       翻译: translation,
-      例句: formattedSentences, // 多个句子用换行分隔
+      例句: longestSentence || "无例句", // 多个句子用换行分隔
     });
   });
 
@@ -471,7 +478,7 @@ async function exportToPDF() {
   doc.autoTable({
     head: [["单词", "翻译", "文中例句"]],
     body: tableData.map((row) => [row.单词, row.翻译, row.例句]),
-    styles: { font: "SourceHanSans", fontSize: 12 }, 
+    styles: { font: "arial-unicode-ms", fontSize: 12 },
     startY: 50 + titleLines.length * 10 + urlLines.length * 10,
 
     margin: { left: 10, right: 10 },
@@ -502,7 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("filterStarredButton").addEventListener("click", toggleStarredFilter);
 
-  loadBookmarksFromServer();
+  // loadBookmarksFromServer();
 
   // 初次加载单词和翻译
   loadWordsAndTranslations();

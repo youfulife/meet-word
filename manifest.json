@@ -38,7 +38,7 @@
   },
 "web_accessible_resources": [
   {
-    "resources": ["fonts/SourceHanSans-Normal.ttf"],
+    "resources": ["fonts/arial-unicode-ms.ttf"],
     "matches": ["<all_urls>"]
   }
 ]

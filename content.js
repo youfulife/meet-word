@@ -6,10 +6,9 @@ function extractSentences() {
   
     // 去除句子中非字母、非空格字符的干扰
     const cleanedSentences = sentences
-      ? sentences.map(sentence => sentence.replace(/[^a-zA-Z\s.,!?']/g, "").trim())
+      ? sentences.map(sentence => sentence.replace(/[^a-zA-Z\s.,!?\"']/g, "").trim())
       : [];
   
-    console.log("Sentences:", cleanedSentences);
     return cleanedSentences;
   }
   
@@ -51,14 +50,7 @@ function extractWords() {
     let words = bodyText.match(/\b[a-zA-Z]+\b/g);
     // 去重
     words = words ? Array.from(new Set(words)) : [];
-    // 过滤掉长度小于4个字母的单词
-    // words = words.filter(word => word.length >= 4);
-
-    // 按字母排序
-    // words = words.sort((a, b) => a.localeCompare(b));
-
-    // 转换为全部小写
-    return words.map(word => word.toLowerCase());
+    return words
 
 }
 
