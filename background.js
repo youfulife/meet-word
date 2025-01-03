@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://127.0.0.1:5000"; // 后端服务的基础 URL
+const API_BASE_URL = "https://meet-word.youfu.life"; // 后端服务的基础 URL
 const userId = "user123"; // 假设从存储或登录信息中获取
 
 // saveBookmarksToServer 函数用于将收藏保存到服务器
@@ -45,7 +45,7 @@ async function loadBookmarksFromServer(callback) {
 
 // 向后端发送单词列表进行翻译
 async function translateWords(words) {
-  const apiUrl = "http://127.0.0.1:5000/translate";
+  const apiUrl = `${API_BASE_URL}/translate`;
 
   try {
     const response = await fetch(apiUrl, {
