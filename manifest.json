@@ -28,12 +28,5 @@
         "content.js"
       ]
     }
-  ],
-
-"web_accessible_resources": [
-  {
-    "resources": ["fonts/arial-unicode-ms.ttf"],
-    "matches": ["https://*/*"]
-  }
-]
+  ]
 }
