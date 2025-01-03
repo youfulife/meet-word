@@ -17,10 +17,8 @@
   },
   "permissions": [
     "storage",
-    "sidePanel",
-    "scripting",
-    "activeTab"
-  ],
+    "sidePanel"
+    ],
   "content_scripts": [
     {
       "matches": [
